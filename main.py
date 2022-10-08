@@ -7,6 +7,7 @@ token = config['TOKEN']
 
 bot = telebot.TeleBot(token)
 
+# Генерация списка кнопок пролистывания концертов
 def gen_markup_for_buy(msg_id):
     markup = types.InlineKeyboardMarkup()
     markup.row_width = 1
@@ -18,6 +19,7 @@ def gen_markup_for_buy(msg_id):
     markup.add(back_but)
     return markup
 
+# Обработка стартовой команды
 @bot.message_handler(commands=['start'])
 def start_message(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -26,6 +28,7 @@ def start_message(message):
     bot.send_message(message.chat.id, 'Добро пожаловать в билетную кассу театра имени А.Боба!')
     bot.send_message(message.chat.id, 'Выберете действие, что вы хотите совершить.', reply_markup=markup)
 
+# Обработка сообщений
 @bot.message_handler(func=lambda message: True)
 def reply_markup_reaction(message):
     if message.text == 'Купить билеты!':
@@ -36,6 +39,7 @@ def reply_markup_reaction(message):
 
 i = 1
 
+# Обработка нажатий на кнопки под сообщениями
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     global i
@@ -49,14 +53,15 @@ def callback_query(call):
                               call.message.message_id,
                               reply_markup=None)
         bot.send_message(call.message.chat.id, 'Выберете действие, что вы хотите совершить.',  reply_markup=markup)
-        bot.delete_message(call.message.chat.id, int(msg_id))
+        # bot.delete_message(call.message.chat.id, int(msg_id))
     elif call.data == 'prev':
         i-=1
-        bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy())
+        bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy(call.message.message_id))
     elif call.data == 'next':
         i += 1
-        bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy())
+        bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy(call.message.message_id))
 
+bot.polling(none_stop=True)
 
-
-bot.infinity_polling()
+if __name__=='__main__':
+    bot.infinity_polling()
