@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 from dotenv import dotenv_values
+import json, os
 
 config = dotenv_values('.env')
 token = config['TOKEN']
@@ -55,13 +56,27 @@ def callback_query(call):
         bot.send_message(call.message.chat.id, 'Выберете действие, что вы хотите совершить.',  reply_markup=markup)
         # bot.delete_message(call.message.chat.id, int(msg_id))
     elif call.data == 'prev':
-        i-=1
+        chat_id =str(call.message.chat.id)
+        with open('info.json') as f: data = json.load(f)
+        if not chat_id in data['index']: data['index'][call.message.chat.id] = 0
+        data['index'][call.message.chat.id]-=1
+        i = data['index'][call.message.chat.id]
+        with open('info.json','w') as f: json.dump(data,f)
         bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy(call.message.message_id))
     elif call.data == 'next':
-        i += 1
+        chat_id = str(call.message.chat.id)
+        with open('info.json') as f:
+            data = json.load(f)
+        if not chat_id in data['index']: data['index'][call.message.chat.id] = 0
+        data['index'][call.message.chat.id] += 1
+        i = data['index'][call.message.chat.id]
+        with open('info.json', 'w') as f:
+            json.dump(data, f)
         bot.edit_message_text(f'Message: {i}', call.message.chat.id, call.message.message_id, reply_markup=gen_markup_for_buy(call.message.message_id))
 
 bot.polling(none_stop=True)
 
 if __name__=='__main__':
+    if not os.path.isfile('info.json'):
+        with open('info.json','w+') as f: json.dump({'index':dict()}, f)
     bot.infinity_polling()
