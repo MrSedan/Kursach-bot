@@ -228,7 +228,15 @@ if __name__ == '__main__':
     if not os.path.isfile('info.json'):
         with open('info.json', 'w+') as f:
             json.dump({'index': dict()}, f)
-
+    if not os.path.isfile('database.db'):
+        with open('database.db','w+') as f: pass
+        db = sqlite3.connect('database.db')
+        cursor = db.cursor()
+        with open('initial.sql') as f:
+            cursor.executescript(f.read())
+        db.commit()
+        cursor.close()
+        db.close()
     with open('info.json') as f:
         data = json.load(f)
     bot.polling(none_stop=True, skip_pending=True)
