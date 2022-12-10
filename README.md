@@ -7,4 +7,5 @@ pip install -r requirements.txt
 ```
 TOKEN=token123
 ```
-Токен можно получить в официальном боте Telegram: [BotFather](https://t.me/BotFather) 
+Токен можно получить в официальном боте Telegram: [BotFather](https://t.me/BotFather)<br/>
+Файл базы данных будет создан автоматически и заполнен несколькими значениями.
