@@ -92,7 +92,7 @@ def gen_markup_for_buy(msg):
         right_but = types.InlineKeyboardButton('➡️', callback_data='next')
         a.append(right_but)
     markup.row(*a)
-    buy_but = types.InlineKeyboardButton('Выбрать билет', callback_data=f'choose_ticket {msg_id}')
+    buy_but = types.InlineKeyboardButton('Выбрать место', callback_data=f'choose_ticket {msg_id}')
     markup.add(buy_but)
     back_but = types.InlineKeyboardButton('Назад', callback_data=f'main_menu {msg_id}')
     markup.add(back_but)
@@ -181,6 +181,7 @@ def start_message(message):
 
 @bot.message_handler(func=lambda message: message.text == 'Показать концерты')
 def reply_markup_reaction_show_concerts(message):
+    global data
     chat_id = str(message.chat.id)
     msg = bot.send_message(message.chat.id, 'Выводится список ближайших концертов...',
                            reply_markup=types.ReplyKeyboardRemove())
@@ -191,6 +192,8 @@ def reply_markup_reaction_show_concerts(message):
     concert_date = concert[1]
     text = f"""{concert_name}\nВремя: {concert_time}\nДата: {concert_date}"""
     bot.send_message(message.chat.id, text, reply_markup=gen_markup_for_buy(msg))
+    data['delete'][chat_id] += 1
+    data_save()
 
 
 @bot.message_handler(func=lambda message: message.text == 'Мои билеты')
@@ -236,7 +239,7 @@ def callback_query(call: types.CallbackQuery):
         bot.delete_message(call.message.chat.id, call.message.id - 1)
         return
     if call.data.startswith('choose_ticket'):
-        bot.edit_message_text('Тест', call.message.chat.id, call.message.message_id,
+        bot.edit_message_text('Выводятся места', call.message.chat.id, call.message.message_id,
                               reply_markup=gen_markup_for_choose(call.message))
         return
     if call.data.startswith('back_to_choose_concert'):
