@@ -4,6 +4,7 @@ from dotenv import dotenv_values
 from datetime import datetime
 import json, os, sqlite3
 from telebot.handler_backends import ContinueHandling
+from telebot.apihelper import ApiTelegramException
 
 config = dotenv_values('.env')
 token = config['TOKEN']
@@ -74,6 +75,7 @@ def gen_markup_after_buy():
     but = types.InlineKeyboardButton('Вернутся к концертам', callback_data='back_to_choose_concert')
     markup.add(but)
     return markup
+
 
 def gen_markup_cant_buy():
     markup = types.InlineKeyboardMarkup()
@@ -154,7 +156,7 @@ def check_concerts(message: types.Message):
     for i in range(data['delete'][chat_id]):
         try:
             bot.delete_message(chat_id, message.message_id - i - 1)
-        except:
+        except ApiTelegramException:
             pass
     data['delete'][chat_id] = 0
     data_save()
@@ -171,7 +173,7 @@ def check_concerts(call: types.CallbackQuery):
     for i in range(data['delete'][chat_id]):
         try:
             bot.delete_message(chat_id, call.message.message_id - i - 1)
-        except:
+        except ApiTelegramException:
             pass
     data['delete'][chat_id] = 0
     data_save()
@@ -189,7 +191,7 @@ def start_message(message):
     chat_id = str(message.chat.id)
     bot.send_message(message.chat.id, 'Добро пожаловать в билетную кассу театра имени А.Боба!')
     bot.send_message(message.chat.id, 'Выберите действие, что вы хотите совершить.', reply_markup=markup)
-    data['delete'][chat_id] = 2
+    data['delete'][chat_id] = 3
     data_save()
 
 
@@ -206,7 +208,8 @@ def reply_markup_reaction_show_concerts(message):
     concert_date = concert[1]
     text = f"""{concert_name}\nВремя: {concert_time}\nДата: {concert_date}"""
     bot.send_message(message.chat.id, text, reply_markup=gen_markup_for_buy(msg))
-    data['delete'][chat_id] += 1
+    data['delete'][chat_id] += 2
+
     data_save()
 
 
@@ -249,12 +252,15 @@ def callback_query(call: types.CallbackQuery):
     chat_id = str(call.message.chat.id)
     if call.data.startswith('main_menu'):
         start_message(call.message)
-        bot.delete_message(call.message.chat.id, call.message.id)
-        bot.delete_message(call.message.chat.id, call.message.id - 1)
+        try:
+            for i in range(2):
+                bot.delete_message(call.message.chat.id, call.message.id - i)
+        except ApiTelegramException:
+            pass
         return
     if call.data.startswith('choose_ticket'):
         concerts = get_concerts()
-        concert = concerts[concerts[data['index'][chat_id]][3]-1]
+        concert = concerts[concerts[data['index'][chat_id]][3] - 1]
         name = concert[0]
         bot.edit_message_text(f'Выводятся места на концерт: {name}', call.message.chat.id, call.message.message_id,
                               reply_markup=gen_markup_for_choose(call.message))
@@ -268,7 +274,7 @@ def callback_query(call: types.CallbackQuery):
         text = f"""{concert_name}\nВремя: {concert_time}\nДата: {concert_date}"""
         try:
             bot.delete_message(call.message.chat.id, call.message.message_id + 1)
-        except:
+        except ApiTelegramException:
             pass
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                               reply_markup=gen_markup_for_buy(call.message))
@@ -294,8 +300,9 @@ def callback_query(call: types.CallbackQuery):
             concerts = get_concerts()
             concert = concerts[concerts[data['index'][chat_id]][3] - 1]
             name = concert[0]
-            bot.edit_message_text(f'Билет на место: {place}\nРяд: {line}\nКонцерт: {name}\nУспешно приобретен!', call.message.chat.id,
-                              call.message.message_id, reply_markup=gen_markup_after_buy())
+            bot.edit_message_text(f'Билет на место: {place}\nРяд: {line}\nКонцерт: {name}\nУспешно приобретен!',
+                                  call.message.chat.id,
+                                  call.message.message_id, reply_markup=gen_markup_after_buy())
         else:
             bot.edit_message_text(f'К сожалению, данный билет уже был приобретен!', call.message.chat.id,
                                   call.message.message_id, reply_markup=gen_markup_cant_buy())
