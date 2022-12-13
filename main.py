@@ -338,4 +338,4 @@ if __name__ == '__main__':
         db.close()
     with open('info.json') as f:
         data = json.load(f)
-    bot.polling(none_stop=True, skip_pending=True)
+    bot.infinity_polling(skip_pending=True)
