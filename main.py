@@ -12,6 +12,13 @@ bot = telebot.TeleBot(token)
 data = dict()
 
 
+def log(text: str):
+    """ Запись лога в файл"""
+    text = str(text)
+    with open('log.txt', 'a+', encoding='utf-8') as f:
+        f.write(f"{datetime.now()} {text}\n")
+
+
 def get_concerts():
     """Получение списка концертов"""
     db = sqlite3.connect("database.db")
@@ -30,6 +37,7 @@ def buy_ticket(user_id, place, line, concert_id):
     user_id = str(user_id)
     cursor.execute(
         f"INSERT INTO Tickets(user,place,line, concert_id) VALUES ({user_id}, {place}, {line}, {concert_id})")
+    log(f"Произведена покупка билета на место {place}, ряд {line}, ид концерта {concert_id}")
     db.commit()
     cursor.close()
     db.close()
@@ -313,10 +321,13 @@ def callback_query(call: types.CallbackQuery):
 
 
 if __name__ == '__main__':
+    if not os.path.isfile('log.txt'):
+        with open('log.txt', 'w+', encoding='utf-8'): pass
     if not os.path.isfile('info.json'):
         with open('info.json', 'w+') as f:
             json.dump({'index': dict(), 'delete': dict()}, f)
     if not os.path.isfile('database.db'):
+        with open('log.txt', 'w+'): pass
         with open('database.db', 'w+') as f: pass
         db = sqlite3.connect('database.db')
         cursor = db.cursor()
