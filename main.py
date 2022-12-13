@@ -191,6 +191,13 @@ def start_message(message):
     chat_id = str(message.chat.id)
     bot.send_message(message.chat.id, 'Добро пожаловать в билетную кассу театра имени А.Боба!')
     bot.send_message(message.chat.id, 'Выберите действие, что вы хотите совершить.', reply_markup=markup)
+    i = 0
+    while i>=0:
+        try:
+            bot.delete_message(message.chat.id, message.message_id - i)
+            i += 1
+        except ApiTelegramException:
+            i = -1
     data['delete'][chat_id] = 3
     data_save()
 
@@ -278,6 +285,10 @@ def callback_query(call: types.CallbackQuery):
             pass
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                               reply_markup=gen_markup_for_buy(call.message))
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id + 1)
+        except ApiTelegramException:
+            pass
         return
     if call.data.startswith('show_map'):
         with open('places.png', 'rb') as f:
