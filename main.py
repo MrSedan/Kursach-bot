@@ -1,13 +1,13 @@
 import telebot
 from telebot import types
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from datetime import datetime
 import json, os, sqlite3
 from telebot.handler_backends import ContinueHandling
 from telebot.apihelper import ApiTelegramException
 
-config = dotenv_values('.env')
-token = config['TOKEN']
+if os.path.exists('.env'): load_dotenv()
+token = os.environ.get('TOKEN')
 
 bot = telebot.TeleBot(token)
 data = dict()
