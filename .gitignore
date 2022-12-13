@@ -3,3 +3,4 @@ env
 .idea
 info.json
 *.db
+log.txt
