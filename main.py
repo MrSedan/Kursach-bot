@@ -67,6 +67,12 @@ def gen_markup_after_buy():
     markup.add(but)
     return markup
 
+def gen_markup_cant_buy():
+    markup = types.InlineKeyboardMarkup()
+    but = types.InlineKeyboardButton('Вернутся к концертам', callback_data='back_to_choose_concert')
+    markup.add(but)
+    return markup
+
 
 def data_save():
     """Сохранение временной информации на носителе"""
@@ -239,7 +245,10 @@ def callback_query(call: types.CallbackQuery):
         bot.delete_message(call.message.chat.id, call.message.id - 1)
         return
     if call.data.startswith('choose_ticket'):
-        bot.edit_message_text('Выводятся места', call.message.chat.id, call.message.message_id,
+        concerts = get_concerts()
+        concert = concerts[concerts[data['index'][chat_id]][3]-1]
+        name = concert[0]
+        bot.edit_message_text(f'Выводятся места на концерт: {name}', call.message.chat.id, call.message.message_id,
                               reply_markup=gen_markup_for_choose(call.message))
         return
     if call.data.startswith('back_to_choose_concert'):
@@ -271,9 +280,17 @@ def callback_query(call: types.CallbackQuery):
         place = call.data.split()[1]
         line = call.data.split()[2]
         concert_id = get_concerts()[data['index'][chat_id]][3]
-        buy_ticket(call.message.chat.id, place, line, concert_id)
-        bot.edit_message_text(f'Билет на место: {place}\nРяд: {line}\nУспешно приобретен!', call.message.chat.id,
+        tickets = get_tickets_for_concert(concert_id)
+        if (int(place), int(line)) not in tickets:
+            buy_ticket(call.message.chat.id, place, line, concert_id)
+            concerts = get_concerts()
+            concert = concerts[concerts[data['index'][chat_id]][3] - 1]
+            name = concert[0]
+            bot.edit_message_text(f'Билет на место: {place}\nРяд: {line}\nКонцерт: {name}\nУспешно приобретен!', call.message.chat.id,
                               call.message.message_id, reply_markup=gen_markup_after_buy())
+        else:
+            bot.edit_message_text(f'К сожалению, данный билет уже был приобретен!', call.message.chat.id,
+                                  call.message.message_id, reply_markup=gen_markup_cant_buy())
         return
 
     concerts = get_concerts()
@@ -303,7 +320,7 @@ if __name__ == '__main__':
         with open('database.db', 'w+') as f: pass
         db = sqlite3.connect('database.db')
         cursor = db.cursor()
-        with open('initial.sql') as f:
+        with open('initial.sql', 'r', encoding='utf-8') as f:
             cursor.executescript(f.read())
         db.commit()
         cursor.close()
