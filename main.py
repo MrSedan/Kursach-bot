@@ -38,7 +38,7 @@ def buy_ticket(user_id, place, line, concert_id):
     user_id = str(user_id)
     cursor.execute(
         f"INSERT INTO Tickets(user,place,line, concert_id) VALUES ({user_id}, {place}, {line}, {concert_id})")
-    log(f"Произведена покупка билета на место {place}, ряд {line}, ид концерта {concert_id}")
+    log(f"Произведена покупка билета на место {place}, ряд {line}, ид концерта {concert_id}, юзер {user_id}")
     db.commit()
     cursor.close()
     db.close()
@@ -132,7 +132,7 @@ def gen_markup_for_choose(msg):
         for j in range(8):
             but = types.InlineKeyboardButton(f'✅ {j + 1}', callback_data=f'buy_ticket {j + 1} {i + 1}') if (j + 1,
                                                                                                             i + 1) not in tickets \
-                else types.InlineKeyboardButton(f'❌ {j + 1}', callback_data=f'choosen')
+                else types.InlineKeyboardButton(f'❌ {j + 1}', callback_data=f'buy_ticket {j + 1} {i + 1}')
             a.append(but)
         markup.row(*a)
     send_map = types.InlineKeyboardButton('Показать карту зала', callback_data='show_map')
@@ -315,7 +315,7 @@ def callback_query(call: types.CallbackQuery):
                                   call.message.message_id, reply_markup=gen_markup_after_buy())
         else:
             bot.edit_message_text(f'К сожалению, данный билет уже был приобретен!', call.message.chat.id,
-                                  call.message.message_id, reply_markup=gen_markup_cant_buy())
+                                  call.message.message_id, reply_markup=gen_markup_after_buy())
         return
 
     concerts = get_concerts()
