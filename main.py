@@ -14,7 +14,7 @@ data = dict()
 
 
 def log(text: str):
-    """ Запись лога в файл"""
+    """Запись лога в файл"""
     text = str(text)
     with open('log.txt', 'a+', encoding='utf-8') as f:
         f.write(f"{datetime.now()} {text}\n")
@@ -45,6 +45,7 @@ def buy_ticket(user_id, place, line, concert_id):
 
 
 def get_my_tickets(user_id):
+    """Получение списка билетов, приобретенных текущим пользователем"""
     db = sqlite3.connect("database.db")
     cursor = db.cursor()
     user_id = str(user_id)
@@ -71,13 +72,7 @@ def get_tickets_for_concert(concert_id):
 
 
 def gen_markup_after_buy():
-    markup = types.InlineKeyboardMarkup()
-    but = types.InlineKeyboardButton('Вернутся к концертам', callback_data='back_to_choose_concert')
-    markup.add(but)
-    return markup
-
-
-def gen_markup_cant_buy():
+    """Генерация кнопок после покупки билета"""
     markup = types.InlineKeyboardMarkup()
     but = types.InlineKeyboardButton('Вернутся к концертам', callback_data='back_to_choose_concert')
     markup.add(but)
@@ -116,6 +111,7 @@ def gen_markup_for_buy(msg):
 
 
 def gen_markup_for_choosen_ticket(place, line):
+    """Генерация списка кнопок для подтверждения покупки"""
     markup = types.InlineKeyboardMarkup()
     buy_but = types.InlineKeyboardButton('Купить билет', callback_data=f'buy_choosen_ticket {place} {line}')
     markup.add(buy_but)
@@ -148,6 +144,7 @@ def gen_markup_for_choose(msg):
 
 @bot.message_handler(func=lambda message: True)
 def check_concerts(message: types.Message):
+    """Удаление предыдущих сообщений после текстовой команды"""
     chat_id = str(message.chat.id)
     if not chat_id in data['index']:
         data['index'][chat_id] = 0
@@ -165,6 +162,7 @@ def check_concerts(message: types.Message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def check_concerts(call: types.CallbackQuery):
+    """Удаление предыдущих сообщений после нажатия на кнопку"""
     chat_id = str(call.message.chat.id)
     if not chat_id in data['index']:
         data['index'][chat_id] = 0
@@ -180,9 +178,9 @@ def check_concerts(call: types.CallbackQuery):
     return ContinueHandling()
 
 
-# Обработка стартовой команды
 @bot.message_handler(commands=['start'])
 def start_message(message):
+    """Обрботка стартовой команды"""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buy_tick_but = types.KeyboardButton('Показать концерты')
     my_tickets = types.KeyboardButton('Мои билеты')
@@ -204,6 +202,7 @@ def start_message(message):
 
 @bot.message_handler(func=lambda message: message.text == 'Показать концерты')
 def reply_markup_reaction_show_concerts(message):
+    """Выдать список концертов"""
     global data
     chat_id = str(message.chat.id)
     msg = bot.send_message(message.chat.id, 'Выводится список ближайших концертов...',
@@ -216,12 +215,12 @@ def reply_markup_reaction_show_concerts(message):
     text = f"""{concert_name}\nВремя: {concert_time}\nДата: {concert_date}"""
     bot.send_message(message.chat.id, text, reply_markup=gen_markup_for_buy(msg))
     data['delete'][chat_id] += 2
-
     data_save()
 
 
 @bot.message_handler(func=lambda message: message.text == 'Мои билеты')
 def show_my_tickets(message: types.Message):
+    """Выдача купленных билетов"""
     bot.send_message(message.chat.id, 'Выводятся ваши билеты...',
                      reply_markup=types.ReplyKeyboardRemove())
     my_tickets = get_my_tickets(message.from_user.id)
